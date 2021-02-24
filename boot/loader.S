@@ -141,7 +141,7 @@ p_mode_start:
 enter_kernel:    
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    call kernel_init
-   mov esp, 0xc009f000
+   mov esp, 0xc009f000		;将来主线程的pcb在0xc009e000 占一个页框 4kb
    jmp KERNEL_ENTRY_POINT                 ; 用地址0x1500访问测试，结果ok
 
 
