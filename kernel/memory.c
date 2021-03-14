@@ -15,8 +15,8 @@
 #define MEM_BITMAP_BASE 0xc009a000
 /*************************************/
 
-#define PDE_IDX(addr) ((addr & 0xffc00000) >> 22)
-#define PTE_IDX(addr) ((addr & 0x003ff000) >> 12)
+#define PDE_IDX(addr) ((addr & 0xffc00000) >> 22)  //1111111111 开头10位 页目录项索引
+#define PTE_IDX(addr) ((addr & 0x003ff000) >> 12)  // 中间10位  页表项索引
 
 /* 0xc0000000是内核从虚拟地址3G起. 0x100000意指跨过低端1M内存,使虚拟地址在逻辑上连续 */
 #define K_HEAP_START 0xc0100000
