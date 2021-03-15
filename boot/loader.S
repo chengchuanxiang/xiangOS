@@ -235,7 +235,7 @@ setup_page:
 ;创建内核其它页表的PDE
    mov eax, PAGE_DIR_TABLE_POS
    add eax, 0x2000 		     ; 此时eax为第二个页表的位置
-   or eax, PG_US_U | PG_RW_W | PG_P  ; 页目录项的属性RW和P位为1,US为0
+   or eax, PG_US_U | PG_RW_W | PG_P  ; 页目录项的属性US，RW和P位为1
    mov ebx, PAGE_DIR_TABLE_POS
    mov ecx, 254			     ; 范围为第769~1022的所有目录项数量
    mov esi, 769

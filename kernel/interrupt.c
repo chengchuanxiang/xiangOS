@@ -23,7 +23,7 @@ struct gate_desc {
    uint16_t    func_offset_high_word;
 };
 
-// 静态函数声明,非必须
+
 static void make_idt_desc(struct gate_desc* p_gdesc, uint8_t attr, intr_handler function);
 static struct gate_desc idt[IDT_DESC_CNT];   // idt是中断描述符表,本质上就是个中断门描述符数组
 
