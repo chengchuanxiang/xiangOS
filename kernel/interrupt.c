@@ -9,10 +9,12 @@
 #define PIC_S_CTRL 0xa0	       // 从片的控制端口是0xa0
 #define PIC_S_DATA 0xa1	       // 从片的数据端口是0xa1
 
-#define IDT_DESC_CNT 0x21      // 目前总共支持的中断数
+#define IDT_DESC_CNT 0x81      // 目前总共支持的中断数，最大支持的中断数，0~0x80
 
 #define EFLAGS_IF   0x00000200       // eflags寄存器中的if位为1
 #define GET_EFLAGS(EFLAG_VAR) asm volatile("pushfl; popl %0" : "=g" (EFLAG_VAR))
+
+extern uint32_t syscall_handler(void);//在kernel.S中定义，系统调用对应的中断入口函数
 
 /*中断门描述符结构体*/
 struct gate_desc {
@@ -68,6 +70,10 @@ static void idt_desc_init(void) {
    for (i = 0; i < IDT_DESC_CNT; i++) {
       make_idt_desc(&idt[i], IDT_DESC_ATTR_DPL0, intr_entry_table[i]); 
    }
+   //给系统调用创建中断描述符
+   int lastindex - IDT_DESC_CNT - 1;
+   make_idt_desc(&idt[lastindex], IDT_DESC_ATTR_DPL3, syscall_handler);//对应中断号是0x80,dpl为3，对应中断处理函数是
+   //syscall_handler
    put_str("   idt_desc_init done\n");
 }
 
@@ -76,9 +82,27 @@ static void general_intr_handler(uint8_t vec_nr) {
    if (vec_nr == 0x27 || vec_nr == 0x2f) {	// 0x2f是从片8259A上的最后一个irq引脚，保留
       return;		//IRQ7和IRQ15会产生伪中断(spurious interrupt),无须处理。
    }
-   put_str("int vector: 0x");
-   put_int(vec_nr);
-   put_char('\n');
+   set_cursor(0);
+   int cursor_pos = 0;
+   while(cursor_pos < 320){
+      put_char(" ");
+      ++cursor_pos;
+   }
+
+   set_cursor(0);
+   put_str("!!!!!!!         excetion message begin   !!!!!!!\n");
+   set_cursor(88);
+   put_str(intr_name[vec_nr]);
+   if(vec_nr == 14){//若为Pagefault，将缺失的地址打印出来并悬停
+      int page_fault_vaddr = 0;
+      asm("movl %%cr2, %0" : "=r"(page_fault_vaddr));//cr2是存放pagefault的地址
+      put_str("\npage falut addr is");
+      put_int(page_fault_vaddr);
+   }
+   put_str("\n!!!!!!      excetion message end      !!!!!!!\n");
+   //处理器进入中断后会自动把标志寄存器eflags中的IF位置0，即中断处理程序在关中断的情况下运行。（防止中断嵌套）
+   //不会再出现调度进程的情况。故下面的死循环不会再被中断，便于观察报错信息
+   while(1);
 }
 
 /* 完成一般中断处理函数注册及异常名称注册 */
@@ -139,6 +163,13 @@ enum intr_status intr_disable() {
       old_status = INTR_OFF;
       return old_status;
    }
+}
+
+//在中断处理程序数组第n个元素中，注册安装中断处理程序function
+void register_handler(uint8_t n, intr_handler function){
+   //idt_table数组中的函数是在进入中断后根据中断向量号调用的
+   //kernel/kerbel.S 中 call [idt_table + %1 * 4]
+   idt_table[n] = function;
 }
 
 /* 将中断状态设置为status */

@@ -8,10 +8,10 @@ switch_to:
    push ebx
    push ebp
 
-   mov eax, [esp + 20]		 ; 得到栈中的参数cur, cur = [esp+20]
+   mov eax, [esp + 20]		 ; 得到栈中的参数cur, cur = [esp+20]，eax中现在保存的是cur的pcb地址
    mov [eax], esp                ; 保存栈顶指针esp. task_struct的self_kstack字段,
 				 ; self_kstack在task_struct中的偏移为0,
-				 ; 所以直接往thread开头处存4字节便可。
+				 ; 所以直接往thread开头处存4字节便可。（相当于解应用pcb指针，然后把esp地址存在开头的内核指针位置
 ;------------------  以上是备份当前线程的环境，下面是恢复下一个线程的环境  ----------------
    mov eax, [esp + 24]		 ; 得到栈中的参数next, next = [esp+24]
    mov esp, [eax]		 ; pcb的第一个成员是self_kstack成员,用来记录0级栈顶指针,

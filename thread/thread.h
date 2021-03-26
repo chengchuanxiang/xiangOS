@@ -5,6 +5,7 @@
 
 /* 自定义通用函数类型,它将在很多线程函数中做为形参类型 */
 typedef void thread_func(void*);
+typedef int16_t pid_t;
 
 /* 进程或线程的状态 */
 enum task_status {
@@ -70,13 +71,14 @@ struct thread_stack {
    void* func_arg;    // 由Kernel_thread所调用的函数所需的参数
 };
 
-/* 进程或线程的pcb,程序控制块 */
+//进程或线程的pcb,程序控制块 ，本系统中大小一页
 struct task_struct {
-   uint32_t* self_kstack;	 // 各内核线程都用自己的内核栈
+   uint32_t* self_kstack;	 // 各内核线程都用自己的内核栈，内核栈顶指针，线程被创建时，被初始化为自己PCB所在页的顶端
+   pid_t pid;
    enum task_status status;
    char name[16];
-   uint8_t priority;
-   uint8_t ticks;	   // 每次在处理器上执行的时间嘀嗒数
+   uint8_t priority;  //用于决定时间片的线程优先级
+   uint8_t ticks;	   // 每次在处理器上执行的时间嘀嗒数 时间片，每次时钟中断减1，减到0就换下cpu
 
 /* 此任务自上cpu运行后至今占用了多少cpu嘀嗒数,
  * 也就是此任务执行了多久*/
@@ -89,6 +91,7 @@ struct task_struct {
    struct list_elem all_list_tag;
 
    uint32_t* pgdir;              // 进程自己页表的虚拟地址
+   struct virtual_addr userprog_vaddr;  //用户进程的虚拟地址
    uint32_t stack_magic;	 // 用这串数字做栈的边界标记,用于检测栈的溢出
 };
 
